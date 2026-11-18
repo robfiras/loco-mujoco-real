@@ -30,14 +30,20 @@ foot friction, CoM offset, observation noise, and optional observation delay and
 
 You need a GPU for training.
 
-**1. Install LocoMuJoCo** in editable mode, following
-[its installation guide](https://github.com/robfiras/loco-mujoco#installation).
+**1. Install LocoMuJoCo** 1.2.0 or newer, with the extras for retargeting and for the browser
+viewers:
+
+```bash
+pip install "loco-mujoco[smpl,viser]>=1.2.0"
+```
+
+An editable install from [its repository](https://github.com/robfiras/loco-mujoco#installation)
+works as well.
 
 **2. Set up SMPL retargeting**, following
 [LocoMuJoCo's SMPL guide](https://github.com/robfiras/loco-mujoco/tree/master/loco_mujoco/smpl).
-Clips are retargeted to the robot the first time they are used, which needs the `smpl` extra
-and the SMPL-H model. You don't need the AMASS dataset: the source clips download
-automatically from
+Clips are retargeted to the robot the first time they are used, which needs the SMPL-H model.
+You don't need the AMASS dataset: the source clips download automatically from
 [Hugging Face](https://huggingface.co/datasets/robfiras/loco-mujoco-datasets).
 
 **3. Install this repository** and tell LocoMuJoCo where its robot configs are:
@@ -49,8 +55,6 @@ pip install -e .
 ```bash
 loco-mujoco-add-variable --name LOCOMUJOCO_CUSTOM_ROBOT_CONF_PATH --value /path/to/loco-mujoco-real/lmj_real/smpl_robot_confs
 ```
-
-The browser viewers additionally need `pip install -e '.[viser]'` in `loco-mujoco`.
 
 ## Quickstart
 
