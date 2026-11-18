@@ -1,0 +1,18 @@
+# @package experiment.env_params
+# `tracking_goal` observation group: reference joint pos/vel, the reference
+# anchor pose expressed in the robot's anchor frame, and the robot's own tracked
+# bodies in that same frame.
+#
+# The re-anchored reference body poses are NOT in the observation -- the policy gets the
+# anchor delta and infers the error. The re-anchoring is consumed by
+# the reward and the terminal handler.
+goal_type: GoalTrajMimicAnchor
+goal_params:
+  # Read by BOTH actor and critic, shared as one copy: the reference is commanded,
+  # not sensed, so the randomizer never touches it and there is nothing to duplicate.
+  group: [tracking_goal]
+  # Tracked bodies and anchor default to the env's tracked_body_names /
+  # anchor_body_name info properties (14 bodies, anchored at the pelvis).
+  # No motion_anchor_pos_b: a real robot has no world position to compute it from. The
+  # anchor orientation stays, since it only needs yaw relative to the start of the motion.
+  use_anchor_pos: false

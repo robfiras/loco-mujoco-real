@@ -1,0 +1,7 @@
+<!-- The X2 in the lab (../common/lab_room.xml). Same robot, keyframe and actuators as
+     x2_ultra_real.xml, so it can stand in as a sim2sim plant:
+       rollout_mujoco.py --bundle <dir> --plant lmj_real/models/x2_ultra_real/x2_ultra_real_lab.xml -->
+<mujoco model="x2_ultra_real_lab">
+  <include file="x2_ultra_real.xml"/>
+  <include file="../common/lab_room.xml"/>
+</mujoco>

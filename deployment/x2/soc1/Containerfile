@@ -1,0 +1,20 @@
+# The lmj X2 tracker on the robot's development unit (SoC1 / PC2, Jetson Orin NX).
+# Built offline on the robot: the base image and the wheels are copied over from a PC.
+#   podman load -i ros_humble_ros_base_arm64.tar
+#   podman build -t lmj/x2-deploy:dev ~/lmj_deploy
+FROM docker.io/library/ros:humble-ros-base-jammy
+
+# mujoco (kinematics only) and numpy 1.x, which ROS Humble's Python bindings need. Wheels are
+# zip files, so they are unpacked rather than installed: the image needs no pip and no network.
+COPY wheels /tmp/wheels
+RUN python3 -c "import glob, zipfile; [zipfile.ZipFile(w).extractall('/opt/pydeps') for w in glob.glob('/tmp/wheels/*.whl')]" && \
+    rm -rf /tmp/wheels
+ENV PYTHONPATH=/opt/pydeps
+# One BLAS thread: on the Orin, with AgiBot's own software busy on half the cores, more
+# threads only collide (network p50 3.6 ms at 1 thread, 5.3 ms at 2 or 4).
+ENV OPENBLAS_NUM_THREADS=1
+
+RUN echo 'source /opt/ros/humble/setup.bash' >> /etc/bash.bashrc && \
+    echo '[ -f /home/agi/lmj_deploy/ws/install/local_setup.bash ] && source /home/agi/lmj_deploy/ws/install/local_setup.bash' >> /etc/bash.bashrc
+WORKDIR /home/agi/lmj_deploy
+CMD ["sleep", "infinity"]

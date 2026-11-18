@@ -1,0 +1,51 @@
+# SMPL retargeting config for G1Real.
+#
+# The lookup is by env class name: load_robot_conf_file("MjxG1Real") strips the Mjx prefix
+# and searches for G1Real.yaml.
+robot_pose_modifier:
+  # - left_shoulder_roll_joint: "np.pi/2 * 1.1"
+  # - left_elbow_joint: "np.pi/2"
+  # - right_shoulder_roll_joint: "-np.pi/2 * 1.1"
+  # - right_elbow_joint: "np.pi/2"
+  # - right_ankle_pitch_joint: "0.1 * np.pi/2"
+  # - left_ankle_pitch_joint: "0.1 * np.pi/2"
+  - left_shoulder_roll_joint: "np.pi/2"
+  - left_elbow_joint: "np.pi/2"
+  - right_shoulder_roll_joint: "-np.pi/2"
+  - right_elbow_joint: "np.pi/2"
+
+site_joint_matches:
+  right_hand_mimic:
+    smpl_joint: "R_Wrist"
+    equality_constraint_type: mjEQ_WELD
+    torque_scale: 10.0
+  left_hand_mimic:
+    smpl_joint: "L_Wrist"
+    equality_constraint_type: mjEQ_WELD
+    torque_scale: 10.0
+  left_knee_mimic:
+    smpl_joint: "L_Knee"
+    equality_constraint_type: mjEQ_WELD
+    torque_scale: 10.0
+  right_knee_mimic:
+    smpl_joint: "R_Knee"
+    equality_constraint_type: mjEQ_WELD
+    torque_scale: 10.0
+  left_foot_mimic:
+    smpl_joint: "L_Ankle"
+    equality_constraint_type: mjEQ_WELD
+    torque_scale: 10.0
+  right_foot_mimic:
+    smpl_joint: "R_Ankle"
+    equality_constraint_type: mjEQ_WELD
+    torque_scale: 10.0
+
+optimization_params:
+  z_offset_feet: -0.0
+
+env_params:
+  # MUST match the training env. defaults.yaml merges in n_substeps: 25, and g1_real.xml sets
+  # no timestep, so MuJoCo's 1 ms default applies. Setting only n_substeps: 4 gives 250 Hz,
+  # which puts `walk` over the 100k sample cap in extend_motion. 4 x 0.005 = 0.02 s = 50 Hz.
+  timestep: 0.005
+  n_substeps: 4

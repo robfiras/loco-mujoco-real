@@ -1,0 +1,51 @@
+# SMPL retargeting config for X2UltraReal.
+#
+# The lookup is by env class name: load_robot_conf_file("MjxX2UltraReal") strips the Mjx
+# prefix and searches for X2UltraReal.yaml.
+robot_pose_modifier:
+  # T-pose. The shoulder bodies are tilted 12 deg (0.2094 rad) outwards, so the arms are
+  # horizontal at pi/2 - 0.2094. The elbow is straight at zero.
+  - left_shoulder_roll_joint: "np.pi/2 - 0.2094"
+  - right_shoulder_roll_joint: "-(np.pi/2 - 0.2094)"
+
+site_joint_matches:
+  right_hand_mimic:
+    smpl_joint: "R_Wrist"
+    equality_constraint_type: mjEQ_WELD
+    torque_scale: 10.0
+  left_hand_mimic:
+    smpl_joint: "L_Wrist"
+    equality_constraint_type: mjEQ_WELD
+    torque_scale: 10.0
+  left_knee_mimic:
+    smpl_joint: "L_Knee"
+    equality_constraint_type: mjEQ_WELD
+    torque_scale: 10.0
+  right_knee_mimic:
+    smpl_joint: "R_Knee"
+    equality_constraint_type: mjEQ_WELD
+    torque_scale: 10.0
+  left_foot_mimic:
+    smpl_joint: "L_Ankle"
+    equality_constraint_type: mjEQ_WELD
+    torque_scale: 10.0
+  right_foot_mimic:
+    smpl_joint: "R_Ankle"
+    equality_constraint_type: mjEQ_WELD
+    torque_scale: 10.0
+
+optimization_params:
+  # Raises the SMPL targets so the foot contact points sit on the floor rather than about
+  # 1 cm inside it (median over a clip, measured on LAFAN1 walk3_subject3).
+  z_offset_feet: 0.03
+  # Stiff joint limits in the retargeting model only. With MuJoCo's defaults the hand welds
+  # pull the wrists up to 2.8 rad past their ranges; with these the worst excess is 0.05 rad.
+  # 0.01 is the stiffest solref MuJoCo allows at the 5 ms retargeting timestep.
+  # Needs a loco-mujoco that reads these two keys in add_mocap_bodies.
+  joint_limit_solref: [0.01, 1.0]
+  joint_limit_solimp: [0.99, 0.999, 0.001, 0.5, 2]
+
+env_params:
+  # MUST match the training env; see G1Real.yaml. 4 x 0.005 = 0.02 s = 50 Hz.
+  timestep: 0.005
+  n_substeps: 4

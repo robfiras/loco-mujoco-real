@@ -1,0 +1,152 @@
+# @package experiment.env_params
+# Observation groups.
+#
+# Actor  <- `history` + `last_action` + `tracking_goal`
+# Critic <- `privileged_state` + `last_action` + `tracking_goal`
+#
+# Observation delay and history ARE implemented, just not here:
+#   delay   -> G1RealRandomizer.obs_delay_steps (randomization/sim2real), applied to
+#              the `history` group only;
+#   history -> experiment.len_obs_history + experiment.obs_history_group, stacking past
+#              frames of the `history` group so the actor grows and the critic does not.
+# Both default to off: measured here, a 20 ms lag costs ~2% and a 4-step history does not
+# recover it.
+#
+# All observation noise comes from the domain randomizer (randomization/sim2real),
+# never from this file.
+# NOTE: actor_obs_group / critic_obs_group are deliberately NOT set here.
+#
+# This file is `@package experiment.env_params`, so keys land at
+# experiment.env_params.*. But the algorithms read them from experiment.* --
+# `PPOJax.init_agent_conf` checks `config.experiment.actor_obs_group`
+# (loco_mujoco/algorithms/ppo_jax.py:114). Declared here they would (a) never be seen,
+# leaving actor and critic sharing one undifferentiated observation, and (b) leak
+# through `ImitationFactory.make(**env_params)` into `Mujoco.__init__`'s `**viewer_params`
+# catch-all, which then raises `MujocoViewer.__init__() got an unexpected keyword
+# argument 'actor_obs_group'` in the post-training recording step.
+#
+# Set them at experiment.* level instead -- see conf.yaml.
+observation_spec:
+  # ---------------- `history`: the actor's sensed state ----------------
+  # These are the only terms the domain randomizer may corrupt -- G1RealRandomizer
+  # resolves both its noise and its observation delay from this group, so anything
+  # listed here is noised and delayed, and anything not listed is untouched.
+  #
+  # They are deliberately NOT shared with the critic. A group is an index view into one
+  # shared observation vector, not a copy, so a term in both groups would hand the critic
+  # the same corrupted numbers the actor gets. The clean duplicates for the critic are in
+  # `privileged_state` below.
+  #
+  # `history` is also the group NStepWrapper stacks (experiment.obs_history_group), so
+  # only these dims gain past frames and the critic keeps a single-frame input.
+  #
+  # joint_pos_rel: relative to the model's `init_state` keyframe, the standing pose.
+  - type: G1RealJointPosRel
+    obs_name: joint_pos_rel
+    xml_names: ${experiment.env_params.robot.joints_to_consider}
+    group: [history]
+    allow_randomization: true
+  # joint_vel_rel: default joint velocity is zero, so relative == absolute.
+  - type: JointVelArray
+    obs_name: joint_vel
+    xml_names: ${experiment.env_params.robot.joints_to_consider}
+    group: [history]
+    allow_randomization: true
+  - type: ProjectedGravityVector
+    obs_name: projected_gravity
+    xml_name: root
+    group: [history]
+    # Stays clean while still being delayed and stacked.
+    allow_randomization: false
+  # base_ang_vel: the IMU gyro at the `imu_in_pelvis` site. That site has an identity quaternion on `pelvis`, and MuJoCo expresses free-joint
+  # angular velocity in the local body frame, so qvel[3:6] is the same vector.
+  - type: EntryFromFreeJointVel
+    entry_index: 3
+    obs_name: base_ang_vel_r
+    xml_name: root
+    group: [history]
+    allow_randomization: true
+  - type: EntryFromFreeJointVel
+    entry_index: 4
+    obs_name: base_ang_vel_p
+    xml_name: root
+    group: [history]
+    allow_randomization: true
+  - type: EntryFromFreeJointVel
+    entry_index: 5
+    obs_name: base_ang_vel_y
+    xml_name: root
+    group: [history]
+    allow_randomization: true
+
+  # ---------------- `last_action` ----------------
+  # Read by BOTH actor and critic, and safe to share as a single copy precisely because
+  # the randomizer never touches it -- the controller knows exactly what it sent.
+  - type: LastAction
+    obs_name: last_action
+    group: [last_action]
+    allow_randomization: false
+
+  # ---------------- `privileged_state`: critic only ----------------
+  # CLEAN duplicates of the four sensed terms above. Same quantities, different slots,
+  # never corrupted -- this is what keeps noise and delay out of the value function.
+  # The critic is discarded at deployment, so there is no realism argument for degrading
+  # it, and corrupted inputs make the value target partly unpredictable from its own
+  # observation.
+  - type: G1RealJointPosRel
+    obs_name: joint_pos_rel_clean
+    xml_names: ${experiment.env_params.robot.joints_to_consider}
+    group: [privileged_state]
+    allow_randomization: false
+  - type: JointVelArray
+    obs_name: joint_vel_clean
+    xml_names: ${experiment.env_params.robot.joints_to_consider}
+    group: [privileged_state]
+    allow_randomization: false
+  - type: ProjectedGravityVector
+    obs_name: projected_gravity_clean
+    xml_name: root
+    group: [privileged_state]
+    allow_randomization: false
+  - type: EntryFromFreeJointVel
+    entry_index: 3
+    obs_name: base_ang_vel_r_clean
+    xml_name: root
+    group: [privileged_state]
+    allow_randomization: false
+  - type: EntryFromFreeJointVel
+    entry_index: 4
+    obs_name: base_ang_vel_p_clean
+    xml_name: root
+    group: [privileged_state]
+    allow_randomization: false
+  - type: EntryFromFreeJointVel
+    entry_index: 5
+    obs_name: base_ang_vel_y_clean
+    xml_name: root
+    group: [privileged_state]
+    allow_randomization: false
+  # root height: on flat ground that is pelvis z.
+  - type: EntryFromFreeJointPos
+    entry_index: 2
+    obs_name: root_height
+    xml_name: root
+    group: [privileged_state]
+    allow_randomization: false
+  # All-body quantities in the root's heading frame, never corrupted.
+  - type: G1RealBodyPosRel
+    obs_name: priv_body_pos
+    group: [privileged_state]
+    allow_randomization: false
+  - type: G1RealBodyOriRel
+    obs_name: priv_body_ori
+    group: [privileged_state]
+    allow_randomization: false
+  - type: G1RealBodyLinVelRel
+    obs_name: priv_body_lin_vel
+    group: [privileged_state]
+    allow_randomization: false
+  - type: G1RealBodyAngVelRel
+    obs_name: priv_body_ang_vel
+    group: [privileged_state]
+    allow_randomization: false

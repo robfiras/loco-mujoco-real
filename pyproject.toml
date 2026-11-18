@@ -1,0 +1,17 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "loco-mujoco-real"
+version = "0.1.0"
+description = "Sim-to-real tooling for LocoMuJoCo motion-tracking policies on the Unitree G1 and the AgiBot X2 Ultra."
+readme = "README.md"
+license = {text = "MIT"}
+requires-python = ">=3.10"
+
+[tool.setuptools.packages.find]
+include = ["lmj_real*"]
+
+[tool.setuptools.package-data]
+"lmj_real" = ["models/**/*", "smpl_robot_confs/*.yaml"]

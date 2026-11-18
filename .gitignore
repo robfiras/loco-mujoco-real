@@ -1,0 +1,27 @@
+__pycache__/
+*.py[cod]
+*.egg-info/
+build/
+dist/
+.pytest_cache/
+.mypy_cache/
+
+# Training artifacts
+outputs/
+wandb/
+LocoMuJoCo_recordings/
+experiments/
+*.log
+
+# pip/shell stdout redirect typos (e.g. `pip install torch >=2.0` -> file `=2.0`)
+=*
+
+# Claude Code local settings
+.claude/settings.local.json
+.claude/scheduled_tasks.lock
+deploy_bundles/
+
+# Prepared motion data
+data/
+
+.DS_Store

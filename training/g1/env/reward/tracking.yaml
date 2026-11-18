@@ -1,0 +1,35 @@
+# @package experiment.env_params
+# Tracking reward. Max achievable ~5.0 per step before dt scaling.
+reward_type: G1RealTrackingReward
+reward_params:
+  # exponential-kernel widths: exp(-error / std**2)
+  root_pos_std: 0.3
+  root_ori_std: 0.4
+  body_pos_std: 0.3
+  body_ori_std: 0.4
+  body_lin_vel_std: 1.0
+  body_ang_vel_std: 3.14
+  # weights
+  w_root_pos: 0.5
+  w_root_ori: 0.5
+  w_body_pos: 1.0
+  w_body_ori: 1.0
+  w_body_lin_vel: 1.0
+  w_body_ang_vel: 1.0
+  # null => -0.1 * action_scale**2. Keep action_scale in sync with
+  # control/position.yaml.
+  w_action_rate: null
+  action_scale: 1.0
+  w_joint_limit: -10.0
+
+  # Counts penetrating contacts. Reference data retargeted without self-collision
+  # awareness can itself collide (hands or wrists against hips and thighs), in which case
+  # the penalty also lands on the reference motion. On a walking set this weight cost only
+  # ~3% reward per step.
+  w_self_collision: -10.0
+  self_collision_penetration_threshold: 0.0
+  soft_joint_pos_limit_factor: 0.9
+
+  # Multiply every term by the control timestep, so the ceiling is 5.0 * 0.02 = 0.1 per
+  # step, i.e. 50 over a 500-step episode.
+  scale_by_dt: true

@@ -1,0 +1,44 @@
+# @package experiment.env_params
+# G1Real tracking env (MJX / MjWarp).
+#   * position servos, zero joint damping/frictionloss, full self-collision
+#   * per-joint action scale (0.25 * effort / stiffness)
+#   * anchored tracking goal and tracking reward (max ~5.0 per step before dt scaling)
+#   * z-only terminations
+#   * pushes, encoder bias and foot friction rather than plant randomization
+defaults:
+  - _self_
+  - robot: g1_29dof_robot
+  - control: position
+  - observation: tracking
+  - reward: tracking
+  - goal: anchor
+  - terminal: tracking
+  - randomization: sim2real
+
+env_name: MjxG1Real
+init_state_type: TrajInitialStateHandler
+
+# 500 steps at 50 Hz = 10 s.
+horizon: 500
+
+# timestep * n_substeps = 0.02 s control step (50 Hz).
+timestep: 0.005
+n_substeps: 4
+
+headless: True
+
+# MjWarp handles the full self-collision set far better than MJX. Caveat: it is
+# flagged experimental in loco_mujoco, and its reset reuses the previous `data` with
+# only qpos/qvel zeroed, so solver/contact state leaks across episodes. RSI itself is
+# unaffected -- TrajInitialStateHandler overwrites qpos/qvel. Set false to compare
+# against the MJX path.
+use_mjwarp: True
+
+model_option_conf:
+  iterations: 10
+  ls_iterations: 20
+  ccd_iterations: 50
+
+th_params:
+  max_n_samples: 200_000
+  max_n_trajs: 20

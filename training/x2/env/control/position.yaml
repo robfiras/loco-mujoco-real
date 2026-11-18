@@ -1,0 +1,15 @@
+# @package experiment.env_params
+# Joint-position control: MuJoCo position servos, per-joint action scale.
+#
+# No PD gains here on purpose -- they live in the MJCF's position actuators
+# (gainprm = kp, biasprm = [0, -kp, -kd]) and the physics engine closes the loop.
+# The per-joint scale is derived from the model as 0.25 * effort_limit / stiffness, so
+# it needs no hardcoded table either.
+control_type: G1RealPositionControl
+control_params:
+  action_scale: 1.0
+  # null = unbounded.
+  clip_actions: null
+  # false = rely on physical limits plus the joint-limit reward penalty instead of
+  # clamping the commanded target.
+  clip_target_to_jnt_range: false

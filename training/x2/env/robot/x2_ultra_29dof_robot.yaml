@@ -1,0 +1,49 @@
+# @package experiment.env_params.robot
+# AgiBot X2 Ultra, 29 actuated DoF (the two head joints are fixed): mimic sites and joint list.
+sites_for_mimic:
+  - upper_body_mimic
+  - left_shoulder_mimic
+  - left_elbow_mimic
+  - left_hand_mimic
+  - left_hip_mimic
+  - left_knee_mimic
+  - left_foot_mimic
+  - right_shoulder_mimic
+  - right_elbow_mimic
+  - right_hand_mimic
+  - right_hip_mimic
+  - right_knee_mimic
+  - right_foot_mimic
+
+# MuJoCo joint order. The waist is yaw, pitch, roll and the wrist is yaw, pitch, roll, which
+# differs from the G1.
+joints_to_consider:
+  - left_hip_pitch_joint
+  - left_hip_roll_joint
+  - left_hip_yaw_joint
+  - left_knee_joint
+  - left_ankle_pitch_joint
+  - left_ankle_roll_joint
+  - right_hip_pitch_joint
+  - right_hip_roll_joint
+  - right_hip_yaw_joint
+  - right_knee_joint
+  - right_ankle_pitch_joint
+  - right_ankle_roll_joint
+  - waist_yaw_joint
+  - waist_pitch_joint
+  - waist_roll_joint
+  - left_shoulder_pitch_joint
+  - left_shoulder_roll_joint
+  - left_shoulder_yaw_joint
+  - left_elbow_joint
+  - left_wrist_yaw_joint
+  - left_wrist_pitch_joint
+  - left_wrist_roll_joint
+  - right_shoulder_pitch_joint
+  - right_shoulder_roll_joint
+  - right_shoulder_yaw_joint
+  - right_elbow_joint
+  - right_wrist_yaw_joint
+  - right_wrist_pitch_joint
+  - right_wrist_roll_joint

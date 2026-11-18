@@ -1,0 +1,104 @@
+# PPO motion tracking on G1Real.
+#
+# Train, overriding anything below on the command line:
+#   python training/g1/train.py
+defaults:
+  - _self_
+  - env: mjx_g1_real
+  - override hydra/job_logging: default
+  - override hydra/launcher: basic
+
+# Optional: point at a PPOJax_saved.pkl to warm-start. null = train from scratch.
+resume_path: null
+
+wandb:
+  project: "g1-real"
+
+experiment:
+  # Must live at experiment.* (not experiment.env_params.*): the algorithms read
+  # config.experiment.actor_obs_group / critic_obs_group. See the note at the top of
+  # env/observation/tracking.yaml.
+  actor_obs_group: [tracking_goal, last_action, history]
+  critic_obs_group: [tracking_goal, last_action, privileged_state]
+
+  # ---- observation history ----
+  # len_obs_history: 1 disables it. >1 stacks PAST frames of obs_history_group only,
+  # appended after the current full observation, so the critic keeps a single-frame
+  # input and only the actor grows: 283 -> 283 + (n-1)*64.
+  #
+  # obs_history_group MUST be set whenever len_obs_history > 1. Leaving it null stacks the
+  # WHOLE observation and widens the critic too.
+  len_obs_history: 1
+  obs_history_group: history
+
+  task_factory:
+    name: ImitationFactory
+    params:
+      # LocoMuJoCo's default mocap clips. Clips missing from the cache are retargeted to
+      # G1Real on first use, which needs the SMPL setup in the README.
+      default_dataset_conf:
+        task: [balance, highjump, highjump2, highknee, jumpturn, onehopforward, onestepleft,
+               onesteplong, onestepright, onestepside1, onestepside2, random_walk, run,
+               squat, stepinplace1, stepinplace2, stepinplace3, walk, walkturn]
+      # To train on your own .lmj.npz files, use this instead. They are concatenated at
+      # load time.
+      # custom_dataset_conf:
+      #   paths:
+      #     - path/to/motion.lmj.npz
+
+  # th_params (trajectory buffer sizes) is set in env/mjx_g1_real.yaml. This file lists
+  # `_self_` first in its defaults, so the env group would override it here; pass larger
+  # datasets as overrides, e.g. experiment.env_params.th_params.max_n_samples=500000.
+  env_params: {}
+
+  hidden_layers: [2048, 1024, 512]
+  lr: 1e-4
+  num_envs: 2048
+  num_steps: 200
+  # 2e9 steps in 20 chunks of 100e6. train.py overwrites PPOJax_saved.pkl after every
+  # chunk, so a wall-clock timeout costs at most the last chunk, and rerunning in the same
+  # output directory resumes from it.
+  total_timesteps: 2e9
+  timesteps_per_chunk: 100e6
+  update_epochs: 4
+  proportion_env_reward: 0.0
+  num_minibatches: 32
+  gamma: 0.99
+  gae_lambda: 0.95
+  clip_eps: 0.2
+  init_std: 0.2
+  learnable_std: false
+  ent_coef: 0.0
+  vf_coef: 0.5
+  max_grad_norm: 0.5
+  activation: tanh
+  anneal_lr: false
+  desired_kl: 0.01
+  weight_decay: 0.0
+  normalize_env: true
+  debug: false
+  n_seeds: 1
+  vmap_across_seeds: true
+
+  validation:
+    active: false
+    num_steps: 100
+    num_envs: 100
+    num: 1
+    quantities:
+      - JointPosition
+      - JointVelocity
+      - RelSitePosition
+      - RelSiteVelocity
+      - RelSiteOrientation
+    measures:
+      - EuclideanDistance
+      - DynamicTimeWarping
+      - DiscreteFrechetDistance
+    rel_site_names:
+      - upper_body_mimic
+      - left_hand_mimic
+      - left_foot_mimic
+      - right_hand_mimic
+      - right_foot_mimic
+    joints_to_ignore: []

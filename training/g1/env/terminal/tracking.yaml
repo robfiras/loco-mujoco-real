@@ -1,0 +1,11 @@
+# @package experiment.env_params
+# Tracking terminations.
+# Every condition is z-only by design: the reference is re-anchored to the robot's live
+# xy and heading each step, so horizontal and heading drift must not end the episode.
+# They are penalised, mildly, by the two global anchor reward terms instead.
+# Timeout comes from env horizon (500 steps = 10 s).
+terminal_state_type: G1RealTrackingTerminalStateHandler
+terminal_state_params:
+  anchor_pos_z_threshold: 0.25
+  anchor_ori_threshold: 0.8
+  ee_body_pos_z_threshold: 0.25
