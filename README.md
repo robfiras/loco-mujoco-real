@@ -2,6 +2,9 @@
   <img width="70%" src="assets/LocoMuJoCoReal.svg" alt="LocoMuJoCo Real logo">
 </p>
 
+[![CI](https://github.com/robfiras/loco-mujoco-real/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/robfiras/loco-mujoco-real/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
 Real-world deployment protocols for robots trained in
 [LocoMuJoCo](https://github.com/robfiras/loco-mujoco). For each robot we provide the
 randomizations, observation spaces and rewards it needs, together with training configs and
