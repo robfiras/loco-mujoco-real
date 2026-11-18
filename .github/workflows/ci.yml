@@ -18,9 +18,8 @@ jobs:
       matrix:
         python-version: ["3.10", "3.12"]
     env:
-      # no GPU and no display on the runner; nothing is logged to Weights & Biases
+      # no GPU on the runner; nothing is logged to Weights & Biases
       JAX_PLATFORMS: cpu
-      MUJOCO_GL: egl
       WANDB_MODE: disabled
     steps:
       - uses: actions/checkout@v4
@@ -31,12 +30,16 @@ jobs:
           cache: pip
           cache-dependency-path: pyproject.toml
 
-      - name: Install LocoMuJoCo and this repository
+      - name: Install LocoMuJoCo
         run: |
           python -m pip install --upgrade pip
           pip install "loco-mujoco[viser]>=1.2.0" pytest
-          pip install -e .
-          loco-mujoco-add-variable --name LOCOMUJOCO_CUSTOM_ROBOT_CONF_PATH --value "$PWD/lmj_real/smpl_robot_confs"
+
+      - name: Install this repository
+        run: pip install -e .
+
+      - name: Point LocoMuJoCo at the robot configs
+        run: loco-mujoco-add-variable --name LOCOMUJOCO_CUSTOM_ROBOT_CONF_PATH --value "$PWD/lmj_real/smpl_robot_confs"
 
       - name: Test
         run: pytest tests -v --durations=10
