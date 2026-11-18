@@ -9,9 +9,14 @@ description = "Sim-to-real tooling for LocoMuJoCo motion-tracking policies on th
 readme = "README.md"
 license = {text = "MIT"}
 requires-python = ">=3.10"
+# LocoMuJoCo itself is installed first, see the README
+dependencies = ["wandb"]
 
 [tool.setuptools.packages.find]
 include = ["lmj_real*"]
 
 [tool.setuptools.package-data]
 "lmj_real" = ["models/**/*", "smpl_robot_confs/*.yaml"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

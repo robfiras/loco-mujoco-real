@@ -51,8 +51,7 @@ from lmj_deploy import (  # noqa: E402
 
 # Tolerances. Observations are pure float arithmetic on the same MjData, so they should
 # agree to float32 round-off. Actions come from a 3-layer MLP in float64 (numpy) vs
-# float32 (jax), and jax's RunningMeanStd folds the incoming sample into its statistics
-# before normalizing while the bundle's are frozen -- hence the looser action budget.
+# float32 (jax), hence the looser action budget.
 OBS_ATOL = 1e-5
 ACTION_ATOL = 1e-3
 TARGET_ATOL = 1e-4
@@ -117,7 +116,11 @@ class JaxPolicy:
         n_seeds = int(getattr(config.experiment, "n_seeds", 1) or 1)
         if n_seeds > 1:
             train_state = jax.tree.map(lambda x: x[seed], train_state)
+        from export_bundle import frozen_run_stats
+
+        # Frozen normalizer statistics, as in the bundle (see frozen_run_stats).
         self.train_state = train_state.replace(
+            run_stats=frozen_run_stats(train_state.run_stats),
             params={**train_state.params,
                     "log_std": np.full_like(np.asarray(train_state.params["log_std"]),
                                             -np.inf)}

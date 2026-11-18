@@ -219,6 +219,7 @@ first use.
 | `deployment/` | export, validation and the bundle rollout, with a folder per robot for its sim2sim rig, controller and guide |
 | `training/g1/bones_to_g1.py` | converts BONES-SEED G1 motions to trajectories |
 | `training/g1/verify_env.py` | behavioural checks on the G1 environment |
+| `tests/` | the test suite: `pytest tests` (CPU only, no SMPL or dataset needed) |
 
 ## Adding your own robot
 

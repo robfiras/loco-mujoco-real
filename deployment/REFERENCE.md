@@ -113,8 +113,9 @@ do not export 10k clips.
 `actor_obs_ind`; normalization is elementwise, so slicing the statistics is equivalent.
 
 `MlpActor` freezes those statistics. Training's `RunningMeanStd` folds the incoming batch
-into them before normalizing, but with a count in the billions the difference is below
-`1e-8` in the action — measured by the exporter's self-test.
+into them before normalizing, which matters only while the count is small. The exporter's
+self-test and `validate_bundle.py` compare against the frozen statistics, so they hold for
+a checkpoint of any age.
 
 Bundles for the X2 on the robot hold clips that start and end standing; see
 [x2/README.md](x2/README.md#robot-bundles-clips-that-start-and-end-standing).

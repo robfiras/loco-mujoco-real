@@ -49,6 +49,7 @@ Usage
 """
 import json
 import os
+import secrets
 import sys
 import time
 import jax
@@ -136,7 +137,7 @@ def experiment(config: DictConfig):
                 wandb_id = f.read().strip()
             print(f"[dist] resuming wandb run {wandb_id}", flush=True)
         else:
-            wandb_id = wandb.util.generate_id()
+            wandb_id = secrets.token_hex(4)  # wandb accepts any id; its own helper moved between versions
             os.makedirs(result_dir, exist_ok=True)
             with open(wandb_id_file, "w") as f:
                 f.write(wandb_id)

@@ -49,6 +49,7 @@ fix likely belongs in the backbone, not here.
 See the README for setup and the full pipeline. Run from the repo root:
 
 ```bash
+pytest tests                         # CPU only, about 2 minutes; CI runs the same
 python training/g1/verify_env.py walk
 python training/g1/bones_to_g1.py <csv or dir> --out <dir>   # BONES-SEED G1 CSVs -> .lmj.npz
 python training/g1/train.py          # or training/x2/train.py

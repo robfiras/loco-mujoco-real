@@ -637,14 +637,26 @@ def self_test_encoder_decoder(agent_conf, agent_state, actor, goal_ind, hist_ind
     return float(np.abs(exact - mine).max()), float(np.abs(trained - mine).max())
 
 
+def frozen_run_stats(run_stats):
+    """The normalizer statistics with a count so large that new samples no longer move them.
+
+    Deployment normalizes with fixed statistics. LocoMuJoCo's ``RunningMeanStd`` has no
+    such mode: it updates on every call, which shifts the output noticeably while the
+    count is small. A huge count makes the update vanish.
+    """
+    import jax
+
+    return {k: ({**v, "count": jax.numpy.full_like(v["count"], 1e15)} if "count" in v else v)
+            for k, v in run_stats.items()}
+
+
 def self_test(agent_conf, agent_state, actor, actor_ind: np.ndarray,
               obs_dim_full: int, n_seeds: int, seed: int, batch: int = 8) -> float:
     """numpy actor vs the jax network, on random full-width observations.
 
     The jax ``RunningMeanStd`` folds the incoming batch into its statistics before
-    normalizing; the bundle's are frozen. With a training count in the billions the
-    difference is far below any tolerance that matters, but it is why this is a
-    tolerance check rather than an exact one.
+    normalizing, while the bundle's are frozen. The comparison freezes the jax side too
+    (see :func:`frozen_run_stats`), so it holds for a checkpoint of any age.
     """
     import jax
     import jax.numpy as jnp
@@ -661,7 +673,7 @@ def self_test(agent_conf, agent_state, actor, actor_ind: np.ndarray,
     obs = mean + std * rng.standard_normal((batch, obs_dim_full))
 
     y, _ = agent_conf.network.apply(
-        {"params": params, "run_stats": run_stats}, jnp.asarray(obs),
+        {"params": params, "run_stats": frozen_run_stats(run_stats)}, jnp.asarray(obs),
         mutable=["run_stats"],
     )
     ref = np.asarray(y[0].mean())
