@@ -83,6 +83,16 @@ checkpoint, `SuperMimicJax_saved.pkl`.
 python training/<robot>/train_supermimic.py
 ```
 
+**GPU memory.** The default settings need a 48 GB GPU; on a 24 GB card training stops with an
+out-of-memory error. To train on 24 GB, halve the sizes:
+
+```bash
+python training/<robot>/train_supermimic.py experiment.num_envs=2048 experiment.env_params.naconmax=70000 experiment.imag_batch_size=1024
+```
+
+On the G1 this runs at about 30k steps/s on an RTX 3090, against about 44k steps/s for the
+default on an RTX A6000.
+
 The settings are in `training/<robot>/supermimic.yaml`, which lists what it changes in the
 environment the PPO recipe uses. The viewer in step 2 reads PPO checkpoints only; the export
 in step 3 and everything after it take a `SuperMimicJax_saved.pkl` as well (see
