@@ -1,8 +1,7 @@
 """Throughput of LocoMuJoCo's three backends on the matched tasks: MuJoCo Playground's G1 joystick task
 (playground_g1.py) and mjlab's G1 velocity task (mjlab_g1.py), each on the other framework's own model.
 
-GPU backends (mjwarp, mjx): per repeat, reset every env, 50 warm-up env steps, time `steps` env steps (env SPS), then
-time `steps * substeps` physics steps from the resulting state with the last control held (physics SPS, in env steps).
+GPU backends (mjwarp, mjx): per repeat, reset every env, 50 warm-up env steps, time `steps` env steps (env SPS).
 CPU backend: one environment per process, `procs` processes started together behind a barrier; per repeat, reset,
 50 warm-up steps, time `cpu_steps` steps; throughput is procs * cpu_steps / slowest process. Repeat 0 is discarded.
 
@@ -154,19 +153,13 @@ def run_gpu():
     env_rollout = jax.jit(lambda s: jax.lax.scan(env_step, s, None, length=args.steps))
     warmup_rollout = jax.jit(lambda s: jax.lax.scan(env_step, s, None, length=args.warmup))
 
-    @jax.jit
-    def physics_rollout(data):
-        return jax.lax.scan(lambda d, _: (jax.vmap(mjx.step, in_axes=(None, 0))(env.sys, d), None), data, None,
-                            length=args.steps * sub)[0]
-
     block = jax.block_until_ready
     t = time.perf_counter()
     s = block(warmup_rollout(block(reset_all(jax.random.split(key, N))))[0])
     s = block(env_rollout(s)[0])
-    block(physics_rollout(s.data))
     info["compile_s"] = time.perf_counter() - t
 
-    env_sps, phys_sps, term, z, bad_quat, nan, nacon, nefc = ([] for _ in range(8))
+    env_sps, term, z, bad_quat, nan, nacon, nefc = ([] for _ in range(7))
     for r in range(args.repeats + 1):  # repeat 0 is discarded (cold start)
         s = block(reset_all(jax.random.split(jax.random.fold_in(key, r), N)))
         s = block(warmup_rollout(s)[0])
@@ -180,14 +173,9 @@ def run_gpu():
         nan.append(int(np.isnan(q).any(axis=1).sum()))
         if args.backend == "mjwarp":
             nacon.append(int(np.asarray(s.data._impl.nacon).ravel()[0])); nefc.append(int(np.asarray(s.data._impl.nefc).max()))
-        t = time.perf_counter()
-        block(physics_rollout(s.data))
-        phys_sps.append(args.steps * N / (time.perf_counter() - t))
-    env_sps, phys_sps = np.array(env_sps[1:]), np.array(phys_sps[1:])
+    env_sps = np.array(env_sps[1:])
     term, z, bad_quat, nan, nacon, nefc = (x[1:] for x in (term, z, bad_quat, nan, nacon, nefc))
     info.update(env_sps_mean=float(env_sps.mean()), env_sps_std=float(env_sps.std()), env_sps_all=env_sps.round(1).tolist(),
-                physics_sps_mean=float(phys_sps.mean()), physics_sps_std=float(phys_sps.std()),
-                physics_sps_all=phys_sps.round(1).tolist(), overhead_pct=float(100 * (1 - env_sps.mean() / phys_sps.mean())),
                 termination_per_step=float(np.mean(term)), root_z_mean=float(np.mean(z)),
                 frac_bad_quat=float(np.mean(bad_quat)), envs_with_nan=int(max(nan)), jax_backend=jax.default_backend())
     if args.backend == "mjwarp":
