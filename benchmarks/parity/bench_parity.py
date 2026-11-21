@@ -33,6 +33,9 @@ p.add_argument("--contacts", choices=["full", "reduced"], default="full",
                help="mjlab task: mjlab's full self-collision or its feet-only collision set")
 p.add_argument("--memory", action="store_true",
                help="memory mode: one jitted env step in a Python loop (warmup + steps), no timing repeats")
+p.add_argument("--donate-state", action="store_true",
+               help="memory mode: donate the state to the jitted step (its buffers are reused for the next state, "
+                    "as in a compiled training loop)")
 p.add_argument("--worker", action="store_true", help=argparse.SUPPRESS)
 args = p.parse_args()
 N = args.num_envs
@@ -127,14 +130,15 @@ def run_gpu():
     info = describe(env)
     if args.memory:
         act_dim = int(env.info.action_space.shape[0])
-        reset_all, step = jax.jit(jax.vmap(env.mjx_reset)), jax.jit(jax.vmap(env.mjx_step))
+        reset_all = jax.jit(jax.vmap(env.mjx_reset))
+        step = jax.jit(jax.vmap(env.mjx_step), donate_argnums=0 if args.donate_state else ())
         zero = jnp.zeros((N, act_dim))
         s = reset_all(jax.random.split(jax.random.key(0), N))
         for _ in range(args.warmup + args.steps):
             s = step(s, zero)
         jax.block_until_ready(s)
         stats = jax.devices()[0].memory_stats() or {}
-        info.update(memory_mode=True, steps_run=args.warmup + args.steps,
+        info.update(memory_mode=True, donate_state=args.donate_state, steps_run=args.warmup + args.steps,
                     jax_peak_bytes=stats.get("peak_bytes_in_use"), jax_bytes_in_use=stats.get("bytes_in_use"),
                     root_z_mean=float(np.asarray(s.data.qpos[:, 2]).mean()), termination_per_step=float("nan"))
         return info
